@@ -1,0 +1,5186 @@
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/common/ExitScreenState.smali b/smali/com/sony/imaging/app/base/common/ExitScreenState.smali
+--- a/smali/com/sony/imaging/app/base/common/ExitScreenState.smali	2026-09-13 13:20:25.380804783 +0800
++++ b/smali/com/sony/imaging/app/base/common/ExitScreenState.smali	2026-09-13 13:05:34.600279631 +0800
+@@ -34,6 +34,7 @@
+     .locals 2
+ 
+     .prologue
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->onExitConfirmed(Ljava/lang/Object;)V
+     .line 29
+     invoke-virtual {p0}, Lcom/sony/imaging/app/base/common/ExitScreenState;->removeState()V
+ 
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/common/ForceExitScreenState.smali b/smali/com/sony/imaging/app/base/common/ForceExitScreenState.smali
+--- a/smali/com/sony/imaging/app/base/common/ForceExitScreenState.smali	2026-09-13 13:20:25.387030039 +0800
++++ b/smali/com/sony/imaging/app/base/common/ForceExitScreenState.smali	2026-09-13 13:05:34.600875278 +0800
+@@ -34,6 +34,7 @@
+     .locals 2
+ 
+     .prologue
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->onExitConfirmed(Ljava/lang/Object;)V
+     .line 30
+     invoke-virtual {p0}, Lcom/sony/imaging/app/base/common/ForceExitScreenState;->removeState()V
+ 
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/menu/BaseMenuService.smali b/smali/com/sony/imaging/app/base/menu/BaseMenuService.smali
+--- a/smali/com/sony/imaging/app/base/menu/BaseMenuService.smali	2026-09-13 13:20:25.513586112 +0800
++++ b/smali/com/sony/imaging/app/base/menu/BaseMenuService.smali	2026-09-13 13:05:34.402590997 +0800
+@@ -1022,6 +1022,10 @@
+ 
+     move-result-object v6
+ 
++    invoke-static {v3, v6}, Lcom/sonylut/bridge/LutBridge;->menuCurrentValue(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v6
++
+     .line 608
+     .local v6, "currentValue":Ljava/lang/String;
+     iget-object v0, v8, Lcom/sony/imaging/app/base/menu/MenuAccessor$DisplayMenuItem;->subItemArray:Ljava/util/ArrayList;
+@@ -2555,6 +2559,11 @@
+     .param p1, "itemid"    # Ljava/lang/String;
+ 
+     .prologue
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->menuGuide(Ljava/lang/String;)Ljava/lang/CharSequence;
++    move-result-object v0
++    if-eqz v0, :lut_orig
++    return-object v0
++    :lut_orig
+     const/4 v2, 0x0
+ 
+     .line 802
+@@ -2886,6 +2895,11 @@
+     .param p1, "itemid"    # Ljava/lang/String;
+ 
+     .prologue
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->menuText(Ljava/lang/String;)Ljava/lang/CharSequence;
++    move-result-object v0
++    if-eqz v0, :lut_orig
++    return-object v0
++    :lut_orig
+     .line 759
+     move-object v0, p1
+ 
+@@ -5148,6 +5162,12 @@
+ 
+     move-result-object v9
+ 
++    # LutBridge：菜单项用合成值 "lut-xxx"，相机 HAL 的 availableValue 里没有；
++    # 不补进去 isValid 会被判 false（该项灰掉/不可选）。
++    invoke-static {v9, p1}, Lcom/sonylut/bridge/LutBridge;->extendAvailable(Ljava/util/List;Ljava/util/List;)Ljava/util/List;
++
++    move-result-object v9
++
+     .line 493
+     .end local v4    # "controller":Lcom/sony/imaging/app/base/menu/IController;
+     .end local v10    # "value":Ljava/lang/String;
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/menu/layout/BaseMenuAdapter.smali b/smali/com/sony/imaging/app/base/menu/layout/BaseMenuAdapter.smali
+--- a/smali/com/sony/imaging/app/base/menu/layout/BaseMenuAdapter.smali	2026-09-13 13:20:25.497739337 +0800
++++ b/smali/com/sony/imaging/app/base/menu/layout/BaseMenuAdapter.smali	2026-09-13 13:05:34.441333578 +0800
+@@ -441,6 +441,11 @@
+ 
+     .line 277
+     :cond_0
++    invoke-static {v1, p2}, Lcom/sonylut/bridge/LutBridge;->iconFor(Ljava/lang/String;Z)Landroid/graphics/drawable/Drawable;
++    move-result-object v2
++    if-eqz v2, :lut_icon_keep
++    move-object v0, v2
++    :lut_icon_keep
+     return-object v0
+ 
+     .line 273
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/menu/layout/SpecialScreenMenuLayout.smali b/smali/com/sony/imaging/app/base/menu/layout/SpecialScreenMenuLayout.smali
+--- a/smali/com/sony/imaging/app/base/menu/layout/SpecialScreenMenuLayout.smali	2026-09-13 13:20:25.624895089 +0800
++++ b/smali/com/sony/imaging/app/base/menu/layout/SpecialScreenMenuLayout.smali	2026-09-13 13:05:34.548239574 +0800
+@@ -542,6 +542,10 @@
+ 
+     move-result-object v13
+ 
++
++    invoke-static {v2, v13}, Lcom/sonylut/bridge/LutBridge;->withCaption(Ljava/lang/String;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
++
++    move-result-object v13
+     invoke-virtual {v12, v13}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+ 
+     .line 216
+@@ -1054,6 +1058,8 @@
+ 
+     iput-object v2, p0, Lcom/sony/imaging/app/base/menu/layout/SpecialScreenMenuLayout;->mItemNameView:Landroid/widget/TextView;
+ 
++    invoke-static {v2}, Lcom/sonylut/bridge/LutBridge;->tuneNameView(Landroid/widget/TextView;)V
++
+     .line 106
+     return-object v1
+ .end method
+@@ -1248,6 +1254,10 @@
+ 
+     move-result-object v9
+ 
++
++    invoke-static {v5, v9}, Lcom/sonylut/bridge/LutBridge;->withCaption(Ljava/lang/String;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
++
++    move-result-object v9
+     invoke-virtual {v8, v9}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+ 
+     .line 582
+@@ -1431,6 +1441,10 @@
+ 
+     move-result-object v9
+ 
++
++    invoke-static {v3, v9}, Lcom/sonylut/bridge/LutBridge;->withCaption(Ljava/lang/String;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
++
++    move-result-object v9
+     invoke-virtual {v8, v9}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+ 
+     .line 465
+@@ -1516,6 +1530,10 @@
+ 
+     move-result-object v9
+ 
++
++    invoke-static {v0, v9}, Lcom/sonylut/bridge/LutBridge;->withCaption(Ljava/lang/String;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
++
++    move-result-object v9
+     invoke-virtual {v8, v9}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+ 
+     .line 481
+@@ -1727,6 +1745,10 @@
+ 
+     move-result-object v3
+ 
++
++    invoke-static {v1, v3}, Lcom/sonylut/bridge/LutBridge;->withCaption(Ljava/lang/String;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
++
++    move-result-object v3
+     invoke-virtual {v2, v3}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+ 
+     .line 524
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/shooting/camera/PictureEffectController.smali b/smali/com/sony/imaging/app/base/shooting/camera/PictureEffectController.smali
+--- a/smali/com/sony/imaging/app/base/shooting/camera/PictureEffectController.smali	2026-09-13 13:20:25.998276470 +0800
++++ b/smali/com/sony/imaging/app/base/shooting/camera/PictureEffectController.smali	2026-09-13 13:05:34.309564311 +0800
+@@ -2603,7 +2603,7 @@
+     return-object v0
+ .end method
+ 
+-.method public getSupportedValue(Ljava/lang/String;)Ljava/util/List;
++.method public lutOrigGetSupportedValue(Ljava/lang/String;)Ljava/util/List;
+     .locals 1
+     .param p1, "tag"    # Ljava/lang/String;
+     .annotation system Ldalvik/annotation/Signature;
+@@ -2647,6 +2647,18 @@
+     goto :goto_0
+ .end method
+ 
++.method public getSupportedValue(Ljava/lang/String;)Ljava/util/List;
++    .locals 1
++
++    invoke-virtual {p0, p1}, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;->lutOrigGetSupportedValue(Ljava/lang/String;)Ljava/util/List;
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->extendList(Ljava/util/List;)Ljava/util/List;
++    move-result-object v0
++
++    return-object v0
++.end method
++
+ .method public getValue()Ljava/lang/String;
+     .locals 2
+ 
+@@ -2883,6 +2895,8 @@
+     .locals 1
+ 
+     .prologue
++    iget-object v0, p0, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;->mCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->onCameraReady(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
+     const/4 v0, 0x0
+ 
+     .line 338
+@@ -3150,6 +3164,12 @@
+     .param p2, "value"    # Ljava/lang/String;
+ 
+     .prologue
++    iget-object v1, p0, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;->mCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++    invoke-static {p2, v1}, Lcom/sonylut/bridge/LutBridge;->intercept(Ljava/lang/String;Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)Z
++    move-result v1
++    if-eqz v1, :lut_continue
++    return-void
++    :lut_continue
+     .line 347
+     iget-object v1, p0, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;->mCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
+ 
+@@ -3180,3 +3200,23 @@
+ 
+     goto :goto_0
+ .end method
++
++.method public onCameraRemoving()V
++    .locals 1
++
++    iget-object v0, p0, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;->mCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->onTerm(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    invoke-super {p0}, Lcom/sony/imaging/app/base/shooting/camera/AbstractController;->onCameraRemoving()V
++    return-void
++.end method
++
++.method public onCameraSet()V
++    .locals 1
++
++    iget-object v0, p0, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;->mCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->onCameraReady(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    invoke-super {p0}, Lcom/sony/imaging/app/base/shooting/camera/AbstractController;->onCameraSet()V
++    return-void
++.end method
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/base/shooting/trigger/custom/NormalFunctionTable.smali b/smali/com/sony/imaging/app/base/shooting/trigger/custom/NormalFunctionTable.smali
+--- a/smali/com/sony/imaging/app/base/shooting/trigger/custom/NormalFunctionTable.smali	2026-09-13 13:20:26.141727524 +0800
++++ b/smali/com/sony/imaging/app/base/shooting/trigger/custom/NormalFunctionTable.smali	2026-09-13 13:05:34.819325082 +0800
+@@ -136,9 +136,9 @@
+ 
+     new-instance v2, Lcom/sony/imaging/app/base/shooting/trigger/custom/FunctionInfo;
+ 
+-    const-string v3, "CreativeStyle"
++    const-string v3, "PictureEffect"
+ 
+-    const-class v4, Lcom/sony/imaging/app/base/shooting/camera/CreativeStyleController;
++    const-class v4, Lcom/sony/imaging/app/base/shooting/camera/PictureEffectController;
+ 
+     invoke-direct {v2, v5, v3, v4}, Lcom/sony/imaging/app/base/shooting/trigger/custom/FunctionInfo;-><init>(ILjava/lang/String;Ljava/lang/Class;)V
+ 
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/fw/AppRoot.smali b/smali/com/sony/imaging/app/fw/AppRoot.smali
+--- a/smali/com/sony/imaging/app/fw/AppRoot.smali	2026-09-13 13:20:26.292365586 +0800
++++ b/smali/com/sony/imaging/app/fw/AppRoot.smali	2026-09-13 13:05:34.599476718 +0800
+@@ -1472,6 +1472,7 @@
+     .param p1, "type"    # Lcom/sony/imaging/app/fw/AppRoot$FINISH_TYPE;
+ 
+     .prologue
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->onExitConfirmed(Ljava/lang/Object;)V
+     .line 946
+     const-string v1, "DLApp Shutdown"
+ 
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/fw/CustomKeyMgr.smali b/smali/com/sony/imaging/app/fw/CustomKeyMgr.smali
+--- a/smali/com/sony/imaging/app/fw/CustomKeyMgr.smali	2026-09-13 13:20:26.291391988 +0800
++++ b/smali/com/sony/imaging/app/fw/CustomKeyMgr.smali	2026-09-13 13:05:34.709774767 +0800
+@@ -212,6 +212,9 @@
+     .param p1, "keyCode"    # I
+ 
+     .prologue
++
++    # === custkey patch (scripts/patch_custkey_smali.py) ===
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->onCustomKey(I)V
+     const/4 v6, 0x1
+ 
+     const/4 v5, 0x0
+@@ -297,6 +300,9 @@
+ 
+     .line 98
+     :cond_2
++    # === custkey exit patch (scripts/patch_custkey_smali.py) ===
++    invoke-static {p1, v0}, Lcom/sonylut/bridge/LutBridge;->forceIfMenuFunc(ILcom/sony/imaging/app/fw/IKeyFunction;)Lcom/sony/imaging/app/fw/IKeyFunction;
++    move-result-object v0
+     return-object v0
+ 
+     .line 91
+diff -ruN -x LutManifest.smali a/smali/com/sony/imaging/app/manuallenscompensation/OpticalCompensation.smali b/smali/com/sony/imaging/app/manuallenscompensation/OpticalCompensation.smali
+--- a/smali/com/sony/imaging/app/manuallenscompensation/OpticalCompensation.smali	2026-09-13 13:20:26.331216001 +0800
++++ b/smali/com/sony/imaging/app/manuallenscompensation/OpticalCompensation.smali	2026-09-13 13:05:34.602158230 +0800
+@@ -451,6 +451,7 @@
+     .prologue
+     .line 66
+     invoke-super {p0, p1}, Lcom/sony/imaging/app/base/BaseApp;->onCreate(Landroid/os/Bundle;)V
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->prewarm(Landroid/content/Context;)V
+ 
+     .line 67
+     invoke-static {}, Lcom/sony/imaging/app/util/BackUpUtil;->getInstance()Lcom/sony/imaging/app/util/BackUpUtil;
+@@ -480,6 +481,7 @@
+     .locals 2
+ 
+     .prologue
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->onUserExit(Ljava/lang/Object;)V
+     .line 96
+     const-string v0, "OpticalCompensation"
+ 
+@@ -525,6 +527,7 @@
+     .locals 7
+ 
+     .prologue
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->onHostResume(Ljava/lang/Object;)V
+     .line 76
+     invoke-super {p0}, Lcom/sony/imaging/app/base/BaseApp;->onResume()V
+ 
+diff -ruN -x LutManifest.smali a/smali/com/sonylut/bridge/LutBridge$1.smali b/smali/com/sonylut/bridge/LutBridge$1.smali
+--- a/smali/com/sonylut/bridge/LutBridge$1.smali	1970-01-01 08:00:00.000000000 +0800
++++ b/smali/com/sonylut/bridge/LutBridge$1.smali	2026-09-13 13:05:34.161741074 +0800
+@@ -0,0 +1,174 @@
++.class Lcom/sonylut/bridge/LutBridge$1;
++.super Ljava/lang/Thread;
++.source "LutBridge.java"
++
++
++# annotations
++.annotation system Ldalvik/annotation/EnclosingMethod;
++    value = Lcom/sonylut/bridge/LutBridge;->prewarm(Landroid/content/Context;)V
++.end annotation
++
++.annotation system Ldalvik/annotation/InnerClass;
++    accessFlags = 0x0
++    name = null
++.end annotation
++
++
++# direct methods
++.method constructor <init>(Ljava/lang/String;)V
++    .locals 0
++
++    .line 546
++    invoke-direct {p0, p1}, Ljava/lang/Thread;-><init>(Ljava/lang/String;)V
++
++    return-void
++.end method
++
++
++# virtual methods
++.method public run()V
++    .locals 7
++
++    .line 549
++    const-string v0, "LutBridge"
++
++    .line 550
++    :try_start_0
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->lutIds()Ljava/util/List;
++
++    move-result-object v1
++
++    invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
++
++    move-result-object v1
++
++    const/4 v2, 0x0
++
++    :goto_0
++    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v3
++
++    if-eqz v3, :cond_1
++
++    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v3
++
++    check-cast v3, Ljava/lang/String;
++
++    .line 551
++    const-string v4, "lut-off"
++
++    invoke-virtual {v4, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v4
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_1
++
++    if-eqz v4, :cond_0
++
++    .line 552
++    goto :goto_0
++
++    .line 555
++    :cond_0
++    :try_start_1
++    invoke-static {v3}, Lcom/sonylut/bridge/LutBridge;->access$000(Ljava/lang/String;)Lcom/sonylut/bridge/LutParams;
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    .line 556
++    add-int/lit8 v2, v2, 0x1
++
++    .line 559
++    goto :goto_1
++
++    .line 557
++    :catchall_0
++    move-exception v4
++
++    .line 558
++    :try_start_2
++    new-instance v5, Ljava/lang/StringBuilder;
++
++    invoke-direct {v5}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v6, "prewarm fail "
++
++    invoke-virtual {v5, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v5
++
++    invoke-virtual {v5, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v3
++
++    invoke-static {v0, v3, v4}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    .line 560
++    :goto_1
++    goto :goto_0
++
++    .line 561
++    :cond_1
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v3, "prewarm done "
++
++    invoke-virtual {v1, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    const-string v2, "/"
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->lutIds()Ljava/util/List;
++
++    move-result-object v2
++
++    invoke-interface {v2}, Ljava/util/List;->size()I
++
++    move-result v2
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_1
++
++    .line 564
++    goto :goto_2
++
++    .line 562
++    :catchall_1
++    move-exception v1
++
++    .line 563
++    const-string v2, "prewarm crashed"
++
++    invoke-static {v0, v2, v1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    .line 565
++    :goto_2
++    return-void
++.end method
+diff -ruN -x LutManifest.smali a/smali/com/sonylut/bridge/LutBridge.smali b/smali/com/sonylut/bridge/LutBridge.smali
+--- a/smali/com/sonylut/bridge/LutBridge.smali	1970-01-01 08:00:00.000000000 +0800
++++ b/smali/com/sonylut/bridge/LutBridge.smali	2026-09-13 13:05:34.203022653 +0800
+@@ -0,0 +1,4362 @@
++.class public Lcom/sonylut/bridge/LutBridge;
++.super Ljava/lang/Object;
++.source "LutBridge.java"
++
++
++# static fields
++.field private static final CAPTION_SCALE:F = 0.6f
++
++.field private static final CAPTION_SEP:Ljava/lang/String; = "\n"
++
++.field private static final CUSTKEY_FORCE_CODE:I = 0x69
++
++.field private static final FILE_APPLIED:Ljava/lang/String; = "lut_applied.txt"
++
++.field public static final ID_PREFIX:Ljava/lang/String; = "lut-"
++
++.field private static final MATRIX_IDENTITY:[I
++
++.field private static final MAX_DESC_CHARS:I = 0x50
++
++.field private static final NAME_MAX_LINES:I = 0x5
++
++.field private static final RETIRED_EFFECTS:[Ljava/lang/String;
++
++.field private static final TAG:Ljava/lang/String; = "LutBridge"
++
++.field private static sActivity:Landroid/app/Activity;
++
++.field private static sAppliedId:Ljava/lang/String;
++
++.field private static sAppliedLoaded:Z
++
++.field private static sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++.field private static sContext:Landroid/content/Context;
++
++.field private static final sIconCache:Ljava/util/Map;
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "Ljava/util/Map<",
++            "Ljava/lang/String;",
++            "Landroid/graphics/drawable/Drawable;",
++            ">;"
++        }
++    .end annotation
++.end field
++
++.field private static sIdentityBuf:[B
++
++.field private static sParamsCache:Ljava/util/Map;
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "Ljava/util/Map<",
++            "Ljava/lang/String;",
++            "Lcom/sonylut/bridge/LutParams;",
++            ">;"
++        }
++    .end annotation
++.end field
++
++.field private static sPrewarmDone:Z
++
++.field private static sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++.field private static sTablePoints:I
++
++
++# direct methods
++.method static constructor <clinit>()V
++    .locals 4
++
++    .line 40
++    const/16 v0, 0x9
++
++    new-array v1, v0, [I
++
++    fill-array-data v1, :array_0
++
++    sput-object v1, Lcom/sonylut/bridge/LutBridge;->MATRIX_IDENTITY:[I
++
++    .line 45
++    const/16 v1, 0x400
++
++    sput v1, Lcom/sonylut/bridge/LutBridge;->sTablePoints:I
++
++    .line 46
++    const/4 v1, 0x0
++
++    sput-boolean v1, Lcom/sonylut/bridge/LutBridge;->sPrewarmDone:Z
++
++    .line 56
++    new-instance v2, Ljava/util/HashMap;
++
++    invoke-direct {v2}, Ljava/util/HashMap;-><init>()V
++
++    sput-object v2, Lcom/sonylut/bridge/LutBridge;->sParamsCache:Ljava/util/Map;
++
++    .line 343
++    const/16 v2, 0x10
++
++    new-array v2, v2, [Ljava/lang/String;
++
++    const-string v3, "part-color"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x1
++
++    const-string v3, "part-color-plus"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x2
++
++    const-string v3, "rough-mono"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x3
++
++    const-string v3, "soft-focus"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x4
++
++    const-string v3, "hdr-art"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x5
++
++    const-string v3, "richtone-mono"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x6
++
++    const-string v3, "miniature"
++
++    aput-object v3, v2, v1
++
++    const/4 v1, 0x7
++
++    const-string v3, "miniature-plus"
++
++    aput-object v3, v2, v1
++
++    const/16 v1, 0x8
++
++    const-string v3, "watercolor"
++
++    aput-object v3, v2, v1
++
++    const-string v1, "illust"
++
++    aput-object v1, v2, v0
++
++    const/16 v0, 0xa
++
++    const-string v1, "toy-camera"
++
++    aput-object v1, v2, v0
++
++    const/16 v0, 0xb
++
++    const-string v1, "toy-camera-plus"
++
++    aput-object v1, v2, v0
++
++    const/16 v0, 0xc
++
++    const-string v1, "pop-color"
++
++    aput-object v1, v2, v0
++
++    const/16 v0, 0xd
++
++    const-string v1, "posterization"
++
++    aput-object v1, v2, v0
++
++    const/16 v0, 0xe
++
++    const-string v1, "retro-photo"
++
++    aput-object v1, v2, v0
++
++    const/16 v0, 0xf
++
++    const-string v1, "soft-high-key"
++
++    aput-object v1, v2, v0
++
++    sput-object v2, Lcom/sonylut/bridge/LutBridge;->RETIRED_EFFECTS:[Ljava/lang/String;
++
++    .line 381
++    new-instance v0, Ljava/util/HashMap;
++
++    invoke-direct {v0}, Ljava/util/HashMap;-><init>()V
++
++    sput-object v0, Lcom/sonylut/bridge/LutBridge;->sIconCache:Ljava/util/Map;
++
++    return-void
++
++    :array_0
++    .array-data 4
++        0x400
++        0x0
++        0x0
++        0x0
++        0x400
++        0x0
++        0x0
++        0x0
++        0x400
++    .end array-data
++.end method
++
++.method public constructor <init>()V
++    .locals 0
++
++    .line 26
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++.method static synthetic access$000(Ljava/lang/String;)Lcom/sonylut/bridge/LutParams;
++    .locals 0
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 26
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->loadParams(Ljava/lang/String;)Lcom/sonylut/bridge/LutParams;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
++.method private static applyLut(Ljava/lang/String;Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++    .locals 6
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 618
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->isBuiltin(Ljava/lang/String;)Z
++
++    move-result v0
++
++    const-string v1, "LutBridge"
++
++    if-nez v0, :cond_0
++
++    .line 619
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "unknown lut id "
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {v1, p0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 620
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->clearPipeline(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 621
++    return-void
++
++    .line 623
++    :cond_0
++    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
++
++    move-result-wide v2
++
++    .line 624
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->loadParams(Ljava/lang/String;)Lcom/sonylut/bridge/LutParams;
++
++    move-result-object v0
++
++    .line 625
++    invoke-virtual {p1}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v4
++
++    .line 626
++    if-nez v4, :cond_1
++
++    .line 627
++    const-string p0, "camera null, cannot apply"
++
++    invoke-static {v1, p0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 628
++    return-void
++
++    .line 630
++    :cond_1
++    sput-object p1, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++    .line 632
++    invoke-static {v4}, Lcom/sonylut/bridge/LutBridge;->ensureBoundGamma(Lcom/sony/scalar/hardware/CameraEx;)V
++
++    .line 633
++    iget-object v1, v0, Lcom/sonylut/bridge/LutParams;->gamma:[I
++
++    invoke-static {v1, v4}, Lcom/sonylut/bridge/LutBridge;->rewriteGamma([ILcom/sony/scalar/hardware/CameraEx;)V
++
++    .line 636
++    nop
++
++    .line 637
++    invoke-virtual {p1}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getEmptyParameters()Landroid/util/Pair;
++
++    move-result-object v1
++
++    .line 638
++    iget-object v4, v1, Landroid/util/Pair;->second:Ljava/lang/Object;
++
++    check-cast v4, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;
++
++    const-string v5, "off"
++
++    invoke-virtual {v4, v5}, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;->setPictureEffect(Ljava/lang/String;)V
++
++    .line 639
++    iget-object v4, v1, Landroid/util/Pair;->second:Ljava/lang/Object;
++
++    check-cast v4, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;
++
++    iget-object v0, v0, Lcom/sonylut/bridge/LutParams;->matrix:[I
++
++    invoke-virtual {v4, v0}, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;->setRGBMatrix([I)V
++
++    .line 640
++    invoke-virtual {p1, v1}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->setParameters(Landroid/util/Pair;)V
++
++    .line 641
++    new-instance p1, Ljava/lang/StringBuilder;
++
++    invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v0, "applied "
++
++    invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string p1, " "
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
++
++    move-result-wide v0
++
++    sub-long/2addr v0, v2
++
++    invoke-virtual {p0, v0, v1}, Ljava/lang/StringBuilder;->append(J)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string p1, "ms"
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 642
++    return-void
++.end method
++
++.method private static clearPipeline(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++    .locals 4
++
++    .line 645
++    const-string v0, "LutBridge"
++
++    const-string v1, "clearPipeline"
++
++    invoke-static {v1}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 646
++    if-eqz p0, :cond_0
++
++    .line 647
++    sput-object p0, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++    .line 650
++    :cond_0
++    :try_start_0
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    if-eqz v1, :cond_1
++
++    sget-object v2, Lcom/sonylut/bridge/LutBridge;->sIdentityBuf:[B
++
++    if-eqz v2, :cond_1
++
++    .line 652
++    new-instance v2, Ljava/io/ByteArrayInputStream;
++
++    sget-object v3, Lcom/sonylut/bridge/LutBridge;->sIdentityBuf:[B
++
++    invoke-direct {v2, v3}, Ljava/io/ByteArrayInputStream;-><init>([B)V
++
++    invoke-virtual {v1, v2}, Lcom/sony/scalar/hardware/CameraEx$GammaTable;->write(Ljava/io/InputStream;)I
++
++    .line 654
++    :cond_1
++    if-eqz p0, :cond_2
++
++    invoke-virtual {p0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v1
++
++    if-eqz v1, :cond_2
++
++    .line 655
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->MATRIX_IDENTITY:[I
++
++    invoke-static {v1, p0}, Lcom/sonylut/bridge/LutBridge;->writeMatrix([ILcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 657
++    :cond_2
++    const-string p0, "pipeline cleared"
++
++    invoke-static {v0, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 660
++    goto :goto_0
++
++    .line 658
++    :catchall_0
++    move-exception p0
++
++    .line 659
++    const-string v1, "clearPipeline failed"
++
++    invoke-static {v0, v1, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    .line 661
++    :goto_0
++    return-void
++.end method
++
++.method private static currentAppliedId()Ljava/lang/String;
++    .locals 2
++
++    .line 119
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sAppliedId:Ljava/lang/String;
++
++    if-eqz v0, :cond_0
++
++    .line 120
++    return-object v0
++
++    .line 122
++    :cond_0
++    sget-boolean v0, Lcom/sonylut/bridge/LutBridge;->sAppliedLoaded:Z
++
++    if-nez v0, :cond_1
++
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    if-eqz v0, :cond_1
++
++    .line 123
++    const/4 v0, 0x1
++
++    sput-boolean v0, Lcom/sonylut/bridge/LutBridge;->sAppliedLoaded:Z
++
++    .line 124
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->readApplied()Ljava/lang/String;
++
++    move-result-object v0
++
++    sput-object v0, Lcom/sonylut/bridge/LutBridge;->sAppliedId:Ljava/lang/String;
++
++    .line 125
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "applied restored from file: "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sAppliedId:Ljava/lang/String;
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 127
++    :cond_1
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sAppliedId:Ljava/lang/String;
++
++    return-object v0
++.end method
++
++.method private static descFor(Ljava/lang/String;)Ljava/lang/String;
++    .locals 2
++
++    .line 172
++    if-eqz p0, :cond_1
++
++    const-string v0, "lut-"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_0
++
++    goto :goto_0
++
++    .line 175
++    :cond_0
++    invoke-virtual {v0}, Ljava/lang/String;->length()I
++
++    move-result v0
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/String;->toUpperCase()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->descOfStem(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p0
++
++    return-object p0
++
++    .line 173
++    :cond_1
++    :goto_0
++    const/4 p0, 0x0
++
++    return-object p0
++.end method
++
++.method private static descOfStem(Ljava/lang/String;)Ljava/lang/String;
++    .locals 1
++
++    .line 179
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->indexOfStem(Ljava/lang/String;)I
++
++    move-result p0
++
++    .line 180
++    if-gez p0, :cond_0
++
++    const/4 p0, 0x0
++
++    goto :goto_0
++
++    :cond_0
++    sget-object v0, Lcom/sonylut/bridge/LutManifest;->DESC:[Ljava/lang/String;
++
++    aget-object p0, v0, p0
++
++    :goto_0
++    return-object p0
++.end method
++
++.method private static declared-synchronized ensureBoundGamma(Lcom/sony/scalar/hardware/CameraEx;)V
++    .locals 10
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    const-class v0, Lcom/sonylut/bridge/LutBridge;
++
++    monitor-enter v0
++
++    .line 681
++    :try_start_0
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_2
++
++    if-eqz v1, :cond_0
++
++    .line 682
++    monitor-exit v0
++
++    return-void
++
++    .line 685
++    :cond_0
++    :try_start_1
++    const-string v1, "LutBridge"
++
++    new-instance v2, Ljava/lang/StringBuilder;
++
++    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v3, "support extGamma="
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {p0}, Lcom/sony/scalar/hardware/CameraEx;->isExtendedGammaTableSupported()Z
++
++    move-result v3
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    const-string v3, " rgbMatrix="
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    .line 686
++    invoke-virtual {p0}, Lcom/sony/scalar/hardware/CameraEx;->isRGBMatrixSupported()Z
++
++    move-result v3
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v2
++
++    .line 685
++    invoke-static {v1, v2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    .line 689
++    goto :goto_0
++
++    .line 687
++    :catchall_0
++    move-exception v1
++
++    .line 688
++    :try_start_2
++    const-string v2, "LutBridge"
++
++    new-instance v3, Ljava/lang/StringBuilder;
++
++    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v4, "support probe n/a: "
++
++    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-static {v2, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 690
++    :goto_0
++    invoke-virtual {p0}, Lcom/sony/scalar/hardware/CameraEx;->createGammaTable()Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    move-result-object v1
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_2
++
++    .line 692
++    const/4 v2, 0x1
++
++    :try_start_3
++    invoke-virtual {v1, v2}, Lcom/sony/scalar/hardware/CameraEx$GammaTable;->setPictureEffectGammaForceOff(Z)V
++    :try_end_3
++    .catchall {:try_start_3 .. :try_end_3} :catchall_1
++
++    .line 695
++    goto :goto_1
++
++    .line 693
++    :catchall_1
++    move-exception v3
++
++    .line 694
++    :try_start_4
++    const-string v4, "LutBridge"
++
++    new-instance v5, Ljava/lang/StringBuilder;
++
++    invoke-direct {v5}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v6, "forceOff n/a: "
++
++    invoke-virtual {v5, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v5
++
++    invoke-virtual {v5, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v3
++
++    invoke-static {v4, v3}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 696
++    :goto_1
++    invoke-virtual {v1}, Lcom/sony/scalar/hardware/CameraEx$GammaTable;->getSize()I
++
++    move-result v3
++
++    .line 697
++    div-int/lit8 v4, v3, 0x2
++
++    .line 698
++    if-lez v4, :cond_1
++
++    const/16 v5, 0x1000
++
++    if-le v4, v5, :cond_2
++
++    .line 699
++    :cond_1
++    const/16 v4, 0x400
++
++    .line 701
++    :cond_2
++    new-array v3, v3, [B
++
++    .line 702
++    const/4 v5, 0x0
++
++    :goto_2
++    if-ge v5, v4, :cond_4
++
++    .line 703
++    int-to-long v6, v5
++
++    const-wide/16 v8, 0x3ff
++
++    mul-long v6, v6, v8
++
++    add-int/lit8 v8, v4, -0x1
++
++    if-lez v8, :cond_3
++
++    goto :goto_3
++
++    :cond_3
++    const/4 v8, 0x1
++
++    :goto_3
++    int-to-long v8, v8
++
++    div-long/2addr v6, v8
++
++    long-to-int v7, v6
++
++    .line 704
++    mul-int/lit8 v6, v5, 0x2
++
++    and-int/lit16 v8, v7, 0xff
++
++    int-to-byte v8, v8
++
++    aput-byte v8, v3, v6
++
++    .line 705
++    add-int/lit8 v6, v6, 0x1
++
++    shr-int/lit8 v7, v7, 0x8
++
++    and-int/lit16 v7, v7, 0xff
++
++    int-to-byte v7, v7
++
++    aput-byte v7, v3, v6
++
++    .line 702
++    add-int/lit8 v5, v5, 0x1
++
++    goto :goto_2
++
++    .line 707
++    :cond_4
++    new-instance v2, Ljava/io/ByteArrayInputStream;
++
++    invoke-direct {v2, v3}, Ljava/io/ByteArrayInputStream;-><init>([B)V
++
++    invoke-virtual {v1, v2}, Lcom/sony/scalar/hardware/CameraEx$GammaTable;->write(Ljava/io/InputStream;)I
++
++    .line 708
++    invoke-virtual {p0, v1}, Lcom/sony/scalar/hardware/CameraEx;->setExtendedGammaTable(Lcom/sony/scalar/hardware/CameraEx$GammaTable;)V
++
++    .line 709
++    sput-object v1, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    .line 710
++    sput-object v3, Lcom/sonylut/bridge/LutBridge;->sIdentityBuf:[B
++
++    .line 711
++    sput v4, Lcom/sonylut/bridge/LutBridge;->sTablePoints:I
++
++    .line 712
++    const-string p0, "LutBridge"
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "gamma bound points="
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v4}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    const-string v2, " keepAlive=true"
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-static {p0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    :try_end_4
++    .catchall {:try_start_4 .. :try_end_4} :catchall_2
++
++    .line 713
++    monitor-exit v0
++
++    return-void
++
++    .line 680
++    :catchall_2
++    move-exception p0
++
++    monitor-exit v0
++
++    goto :goto_5
++
++    :goto_4
++    throw p0
++
++    :goto_5
++    goto :goto_4
++.end method
++
++.method public static extendAvailable(Ljava/util/List;Ljava/util/List;)Ljava/util/List;
++    .locals 4
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "(",
++            "Ljava/util/List<",
++            "Ljava/lang/String;",
++            ">;",
++            "Ljava/util/List<",
++            "Ljava/lang/String;",
++            ">;)",
++            "Ljava/util/List<",
++            "Ljava/lang/String;",
++            ">;"
++        }
++    .end annotation
++
++    .line 439
++    if-nez p1, :cond_0
++
++    .line 440
++    return-object p0
++
++    .line 442
++    :cond_0
++    nop
++
++    .line 443
++    :try_start_0
++    invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
++
++    move-result-object p1
++
++    :goto_0
++    invoke-interface {p1}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v0
++
++    const/4 v1, 0x0
++
++    if-eqz v0, :cond_2
++
++    invoke-interface {p1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v0
++
++    .line 444
++    instance-of v2, v0, Ljava/lang/String;
++
++    if-eqz v2, :cond_1
++
++    check-cast v0, Ljava/lang/String;
++
++    const-string v2, "lut-"
++
++    invoke-virtual {v0, v2}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_1
++
++    .line 445
++    nop
++
++    .line 446
++    const/4 p1, 0x1
++
++    goto :goto_1
++
++    .line 448
++    :cond_1
++    goto :goto_0
++
++    .line 443
++    :cond_2
++    const/4 p1, 0x0
++
++    .line 449
++    :goto_1
++    if-nez p1, :cond_3
++
++    .line 450
++    return-object p0
++
++    .line 452
++    :cond_3
++    if-eqz p0, :cond_4
++
++    .line 453
++    new-instance p1, Ljava/util/ArrayList;
++
++    invoke-direct {p1, p0}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
++
++    goto :goto_2
++
++    :cond_4
++    new-instance p1, Ljava/util/ArrayList;
++
++    invoke-direct {p1}, Ljava/util/ArrayList;-><init>()V
++
++    .line 454
++    :goto_2
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->lutIds()Ljava/util/List;
++
++    move-result-object v0
++
++    invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
++
++    move-result-object v0
++
++    :goto_3
++    invoke-interface {v0}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result v2
++
++    if-eqz v2, :cond_6
++
++    invoke-interface {v0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object v2
++
++    check-cast v2, Ljava/lang/String;
++
++    .line 455
++    invoke-interface {p1, v2}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
++
++    move-result v3
++
++    if-nez v3, :cond_5
++
++    .line 456
++    invoke-interface {p1, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    .line 458
++    :cond_5
++    goto :goto_3
++
++    .line 459
++    :cond_6
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "extendAvailable "
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    if-nez p0, :cond_7
++
++    goto :goto_4
++
++    :cond_7
++    invoke-interface {p0}, Ljava/util/List;->size()I
++
++    move-result v1
++
++    :goto_4
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    const-string v1, " -> "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    .line 460
++    invoke-interface {p1}, Ljava/util/List;->size()I
++
++    move-result v1
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    .line 459
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 461
++    return-object p1
++
++    .line 462
++    :catchall_0
++    move-exception p1
++
++    .line 463
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "extendAvailable FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 464
++    return-object p0
++.end method
++
++.method public static extendList(Ljava/util/List;)Ljava/util/List;
++    .locals 5
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "(",
++            "Ljava/util/List<",
++            "Ljava/lang/String;",
++            ">;)",
++            "Ljava/util/List<",
++            "Ljava/lang/String;",
++            ">;"
++        }
++    .end annotation
++
++    .line 427
++    if-eqz p0, :cond_0
++
++    .line 428
++    new-instance v0, Ljava/util/ArrayList;
++
++    invoke-direct {v0, p0}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
++
++    goto :goto_0
++
++    :cond_0
++    new-instance v0, Ljava/util/ArrayList;
++
++    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
++
++    .line 429
++    :goto_0
++    sget-object p0, Lcom/sonylut/bridge/LutManifest;->IDS:[Ljava/lang/String;
++
++    array-length v1, p0
++
++    const/4 v2, 0x0
++
++    :goto_1
++    if-ge v2, v1, :cond_2
++
++    aget-object v3, p0, v2
++
++    .line 430
++    invoke-interface {v0, v3}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
++
++    move-result v4
++
++    if-nez v4, :cond_1
++
++    .line 431
++    invoke-interface {v0, v3}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++
++    .line 429
++    :cond_1
++    add-int/lit8 v2, v2, 0x1
++
++    goto :goto_1
++
++    .line 434
++    :cond_2
++    return-object v0
++.end method
++
++.method public static forceIfMenuFunc(ILcom/sony/imaging/app/fw/IKeyFunction;)Lcom/sony/imaging/app/fw/IKeyFunction;
++    .locals 8
++
++    .line 301
++    const-string v0, " item="
++
++    if-nez p1, :cond_0
++
++    .line 302
++    const/4 p0, 0x0
++
++    return-object p0
++
++    .line 306
++    :cond_0
++    :try_start_0
++    invoke-interface {p1}, Lcom/sony/imaging/app/fw/IKeyFunction;->getItemIdForMenu()Ljava/lang/String;
++
++    move-result-object v1
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_1
++
++    .line 309
++    nop
++
++    .line 310
++    const/4 v2, 0x1
++
++    const/4 v3, 0x0
++
++    if-eqz v1, :cond_1
++
++    :try_start_1
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v4
++
++    if-lez v4, :cond_1
++
++    const/4 v4, 0x1
++
++    goto :goto_0
++
++    .line 324
++    :catchall_0
++    move-exception p0
++
++    goto/16 :goto_4
++
++    .line 310
++    :cond_1
++    const/4 v4, 0x0
++
++    .line 311
++    :goto_0
++    const/16 v5, 0x69
++
++    if-ne p0, v5, :cond_2
++
++    const/4 v5, 0x1
++
++    goto :goto_1
++
++    :cond_2
++    const/4 v5, 0x0
++
++    .line 313
++    :goto_1
++    new-instance v6, Ljava/lang/StringBuilder;
++
++    invoke-direct {v6}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v7, "custkey code="
++
++    invoke-virtual {v6, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    invoke-virtual {v6, p0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    invoke-virtual {v6, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    invoke-virtual {v6, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    const-string v7, " menuFunc="
++
++    invoke-virtual {v6, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    invoke-virtual {v6, v4}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    const-string v7, " force="
++
++    invoke-virtual {v6, v7}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v6
++
++    if-eqz v5, :cond_3
++
++    if-eqz v4, :cond_3
++
++    goto :goto_2
++
++    :cond_3
++    const/4 v2, 0x0
++
++    :goto_2
++    invoke-virtual {v6, v2}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v2
++
++    invoke-static {v2}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 315
++    if-eqz v4, :cond_6
++
++    if-nez v5, :cond_4
++
++    goto :goto_3
++
++    .line 318
++    :cond_4
++    sget-object v2, Lcom/sony/imaging/app/fw/CustomizableFunction;->CreativeStyle:Lcom/sony/imaging/app/fw/CustomizableFunction;
++
++    if-ne p1, v2, :cond_5
++
++    .line 319
++    return-object p1
++
++    .line 321
++    :cond_5
++    new-instance v2, Ljava/lang/StringBuilder;
++
++    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v3, "custkey redirect code="
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {v2, p0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v0, " -> CreativeStyle"
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 323
++    sget-object p0, Lcom/sony/imaging/app/fw/CustomizableFunction;->CreativeStyle:Lcom/sony/imaging/app/fw/CustomizableFunction;
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    return-object p0
++
++    .line 316
++    :cond_6
++    :goto_3
++    return-object p1
++
++    .line 325
++    :goto_4
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "forceIfMenuFunc FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 326
++    return-object p1
++
++    .line 307
++    :catchall_1
++    move-exception p0
++
++    .line 308
++    return-object p1
++.end method
++
++.method public static iconFor(Ljava/lang/String;Z)Landroid/graphics/drawable/Drawable;
++    .locals 6
++
++    .line 386
++    const/4 v0, 0x0
++
++    if-eqz p0, :cond_6
++
++    const-string v1, "lut-"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_0
++
++    goto/16 :goto_1
++
++    .line 389
++    :cond_0
++    if-eqz p1, :cond_1
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    const-string v2, "#s"
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    goto :goto_0
++
++    :cond_1
++    move-object v1, p0
++
++    .line 391
++    :goto_0
++    :try_start_0
++    sget-object v2, Lcom/sonylut/bridge/LutBridge;->sIconCache:Ljava/util/Map;
++
++    invoke-interface {v2, v1}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object v3
++
++    check-cast v3, Landroid/graphics/drawable/Drawable;
++
++    .line 392
++    if-eqz v3, :cond_2
++
++    .line 393
++    return-object v3
++
++    .line 395
++    :cond_2
++    sget-object v3, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    if-nez v3, :cond_3
++
++    .line 396
++    return-object v0
++
++    .line 398
++    :cond_3
++    nop
++
++    .line 399
++    invoke-virtual {v3}, Landroid/content/Context;->getAssets()Landroid/content/res/AssetManager;
++
++    move-result-object v3
++
++    new-instance v4, Ljava/lang/StringBuilder;
++
++    invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v5, "icons/"
++
++    invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v4
++
++    invoke-virtual {v4, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v4
++
++    const-string v5, ".png"
++
++    invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v4
++
++    invoke-virtual {v4}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v4
++
++    invoke-virtual {v3, v4}, Landroid/content/res/AssetManager;->open(Ljava/lang/String;)Ljava/io/InputStream;
++
++    move-result-object v3
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_1
++
++    .line 402
++    :try_start_1
++    invoke-static {v3}, Landroid/graphics/BitmapFactory;->decodeStream(Ljava/io/InputStream;)Landroid/graphics/Bitmap;
++
++    move-result-object v4
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    .line 404
++    :try_start_2
++    invoke-virtual {v3}, Ljava/io/InputStream;->close()V
++
++    .line 405
++    nop
++
++    .line 406
++    if-nez v4, :cond_4
++
++    .line 407
++    new-instance p1, Ljava/lang/StringBuilder;
++
++    invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "iconFor: decode failed "
++
++    invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 408
++    return-object v0
++
++    .line 410
++    :cond_4
++    new-instance v3, Landroid/graphics/drawable/BitmapDrawable;
++
++    sget-object v5, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    .line 412
++    invoke-virtual {v5}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v5
++
++    invoke-direct {v3, v5, v4}, Landroid/graphics/drawable/BitmapDrawable;-><init>(Landroid/content/res/Resources;Landroid/graphics/Bitmap;)V
++
++    .line 413
++    if-eqz p1, :cond_5
++
++    .line 415
++    sget-object p1, Landroid/graphics/PorterDuff$Mode;->SRC_ATOP:Landroid/graphics/PorterDuff$Mode;
++
++    const v4, 0x33ffffff
++
++    invoke-virtual {v3, v4, p1}, Landroid/graphics/drawable/BitmapDrawable;->setColorFilter(ILandroid/graphics/PorterDuff$Mode;)V
++
++    .line 418
++    :cond_5
++    invoke-interface {v2, v1, v3}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++
++    .line 419
++    return-object v3
++
++    .line 404
++    :catchall_0
++    move-exception p1
++
++    invoke-virtual {v3}, Ljava/io/InputStream;->close()V
++
++    .line 405
++    throw p1
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_1
++
++    .line 420
++    :catchall_1
++    move-exception p1
++
++    .line 421
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "iconFor FAIL "
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, " "
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 422
++    return-object v0
++
++    .line 387
++    :cond_6
++    :goto_1
++    return-object v0
++.end method
++
++.method private static indexOfStem(Ljava/lang/String;)I
++    .locals 2
++
++    .line 32
++    const/4 v0, 0x0
++
++    :goto_0
++    sget-object v1, Lcom/sonylut/bridge/LutManifest;->STEMS:[Ljava/lang/String;
++
++    array-length v1, v1
++
++    if-ge v0, v1, :cond_1
++
++    .line 33
++    sget-object v1, Lcom/sonylut/bridge/LutManifest;->STEMS:[Ljava/lang/String;
++
++    aget-object v1, v1, v0
++
++    invoke-virtual {v1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_0
++
++    .line 34
++    return v0
++
++    .line 32
++    :cond_0
++    add-int/lit8 v0, v0, 0x1
++
++    goto :goto_0
++
++    .line 37
++    :cond_1
++    const/4 p0, -0x1
++
++    return p0
++.end method
++
++.method public static intercept(Ljava/lang/String;Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)Z
++    .locals 4
++
++    .line 350
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "icpt v="
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 352
++    const/4 v0, 0x0
++
++    if-eqz p0, :cond_5
++
++    if-nez p1, :cond_0
++
++    goto :goto_1
++
++    .line 355
++    :cond_0
++    :try_start_0
++    const-string v1, "off"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    const/4 v2, 0x0
++
++    if-eqz v1, :cond_1
++
++    .line 356
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->clearPipeline(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 357
++    invoke-static {v2}, Lcom/sonylut/bridge/LutBridge;->saveApplied(Ljava/lang/String;)V
++
++    .line 358
++    return v0
++
++    .line 360
++    :cond_1
++    const-string v1, "lut-off"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    const/4 v3, 0x1
++
++    if-eqz v1, :cond_2
++
++    .line 361
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->clearPipeline(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 362
++    invoke-static {p1}, Lcom/sonylut/bridge/LutBridge;->setHalEffectOff(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 363
++    invoke-static {v2}, Lcom/sonylut/bridge/LutBridge;->saveApplied(Ljava/lang/String;)V
++
++    .line 364
++    return v3
++
++    .line 367
++    :cond_2
++    const-string v1, "lut-"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_3
++
++    .line 368
++    return v0
++
++    .line 370
++    :cond_3
++    nop
++
++    .line 371
++    invoke-static {p0, p1}, Lcom/sonylut/bridge/LutBridge;->applyLut(Ljava/lang/String;Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 373
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->isBuiltin(Ljava/lang/String;)Z
++
++    move-result p1
++
++    if-eqz p1, :cond_4
++
++    goto :goto_0
++
++    :cond_4
++    move-object p0, v2
++
++    :goto_0
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->saveApplied(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 374
++    return v3
++
++    .line 375
++    :catchall_0
++    move-exception p0
++
++    .line 376
++    new-instance p1, Ljava/lang/StringBuilder;
++
++    invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "icpt FAIL "
++
++    invoke-virtual {p1, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 377
++    return v0
++
++    .line 353
++    :cond_5
++    :goto_1
++    return v0
++.end method
++
++.method public static isBuiltin(Ljava/lang/String;)Z
++    .locals 3
++
++    .line 155
++    const/4 v0, 0x0
++
++    if-eqz p0, :cond_2
++
++    const-string v1, "lut-"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v2
++
++    if-nez v2, :cond_0
++
++    goto :goto_0
++
++    .line 158
++    :cond_0
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v1
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/String;->toUpperCase()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->indexOfStem(Ljava/lang/String;)I
++
++    move-result p0
++
++    if-ltz p0, :cond_1
++
++    const/4 v0, 0x1
++
++    :cond_1
++    return v0
++
++    .line 156
++    :cond_2
++    :goto_0
++    return v0
++.end method
++
++.method private static isRetired(Ljava/lang/String;)Z
++    .locals 6
++
++    .line 331
++    const/4 v0, 0x1
++
++    if-eqz p0, :cond_0
++
++    const-string v1, "PictureEffect_"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_0
++
++    .line 333
++    return v0
++
++    .line 335
++    :cond_0
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->RETIRED_EFFECTS:[Ljava/lang/String;
++
++    array-length v2, v1
++
++    const/4 v3, 0x0
++
++    const/4 v4, 0x0
++
++    :goto_0
++    if-ge v4, v2, :cond_2
++
++    aget-object v5, v1, v4
++
++    .line 336
++    invoke-virtual {v5, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v5
++
++    if-eqz v5, :cond_1
++
++    .line 337
++    return v0
++
++    .line 335
++    :cond_1
++    add-int/lit8 v4, v4, 0x1
++
++    goto :goto_0
++
++    .line 340
++    :cond_2
++    return v3
++.end method
++
++.method private static declared-synchronized loadParams(Ljava/lang/String;)Lcom/sonylut/bridge/LutParams;
++    .locals 6
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    const-class v0, Lcom/sonylut/bridge/LutBridge;
++
++    monitor-enter v0
++
++    .line 592
++    :try_start_0
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sParamsCache:Ljava/util/Map;
++
++    invoke-interface {v1, p0}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object v1
++
++    check-cast v1, Lcom/sonylut/bridge/LutParams;
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_1
++
++    .line 593
++    if-eqz v1, :cond_0
++
++    .line 594
++    monitor-exit v0
++
++    return-object v1
++
++    .line 596
++    :cond_0
++    :try_start_1
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    if-eqz v1, :cond_2
++
++    .line 599
++    const-string v1, "lut-"
++
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v1
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/String;->toUpperCase()Ljava/lang/String;
++
++    move-result-object v1
++
++    .line 600
++    sget-object v2, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    invoke-virtual {v2}, Landroid/content/Context;->getAssets()Landroid/content/res/AssetManager;
++
++    move-result-object v2
++
++    new-instance v3, Ljava/lang/StringBuilder;
++
++    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v4, "luts/"
++
++    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    const-string v3, ".LTC"
++
++    invoke-virtual {v1, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-virtual {v2, v1}, Landroid/content/res/AssetManager;->open(Ljava/lang/String;)Ljava/io/InputStream;
++
++    move-result-object v1
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_1
++
++    .line 602
++    :try_start_2
++    new-instance v2, Ljava/io/ByteArrayOutputStream;
++
++    const/16 v3, 0x1000
++
++    invoke-direct {v2, v3}, Ljava/io/ByteArrayOutputStream;-><init>(I)V
++
++    .line 603
++    const/16 v3, 0x400
++
++    new-array v3, v3, [B
++
++    .line 605
++    :goto_0
++    invoke-virtual {v1, v3}, Ljava/io/InputStream;->read([B)I
++
++    move-result v4
++
++    if-lez v4, :cond_1
++
++    .line 606
++    const/4 v5, 0x0
++
++    invoke-virtual {v2, v3, v5, v4}, Ljava/io/ByteArrayOutputStream;->write([BII)V
++
++    goto :goto_0
++
++    .line 608
++    :cond_1
++    invoke-virtual {v2}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
++
++    move-result-object v2
++
++    invoke-static {v2}, Lcom/sonylut/bridge/LutParams;->load([B)Lcom/sonylut/bridge/LutParams;
++
++    move-result-object v2
++
++    .line 609
++    sget-object v3, Lcom/sonylut/bridge/LutBridge;->sParamsCache:Ljava/util/Map;
++
++    invoke-interface {v3, p0, v2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_0
++
++    .line 610
++    nop
++
++    .line 612
++    :try_start_3
++    invoke-virtual {v1}, Ljava/io/InputStream;->close()V
++    :try_end_3
++    .catchall {:try_start_3 .. :try_end_3} :catchall_1
++
++    .line 610
++    monitor-exit v0
++
++    return-object v2
++
++    .line 612
++    :catchall_0
++    move-exception p0
++
++    :try_start_4
++    invoke-virtual {v1}, Ljava/io/InputStream;->close()V
++
++    .line 613
++    throw p0
++
++    .line 597
++    :cond_2
++    new-instance p0, Ljava/io/IOException;
++
++    const-string v1, "no context for assets"
++
++    invoke-direct {p0, v1}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw p0
++    :try_end_4
++    .catchall {:try_start_4 .. :try_end_4} :catchall_1
++
++    .line 591
++    :catchall_1
++    move-exception p0
++
++    monitor-exit v0
++
++    goto :goto_2
++
++    :goto_1
++    throw p0
++
++    :goto_2
++    goto :goto_1
++.end method
++
++.method private static log(Ljava/lang/String;)V
++    .locals 1
++
++    .line 63
++    const-string v0, "LutBridge"
++
++    invoke-static {v0, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 64
++    return-void
++.end method
++
++.method public static declared-synchronized lutIds()Ljava/util/List;
++    .locals 7
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "()",
++            "Ljava/util/List<",
++            "Ljava/lang/String;",
++            ">;"
++        }
++    .end annotation
++
++    const-class v0, Lcom/sonylut/bridge/LutBridge;
++
++    monitor-enter v0
++
++    .line 162
++    :try_start_0
++    new-instance v1, Ljava/util/ArrayList;
++
++    invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
++
++    .line 163
++    sget-object v2, Lcom/sonylut/bridge/LutManifest;->IDS:[Ljava/lang/String;
++
++    array-length v3, v2
++
++    const/4 v4, 0x0
++
++    :goto_0
++    if-ge v4, v3, :cond_1
++
++    aget-object v5, v2, v4
++
++    .line 164
++    const-string v6, "lut-"
++
++    invoke-virtual {v5, v6}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v6
++
++    if-eqz v6, :cond_0
++
++    .line 165
++    invoke-interface {v1, v5}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 163
++    :cond_0
++    add-int/lit8 v4, v4, 0x1
++
++    goto :goto_0
++
++    .line 168
++    :cond_1
++    monitor-exit v0
++
++    return-object v1
++
++    .line 161
++    :catchall_0
++    move-exception v1
++
++    monitor-exit v0
++
++    goto :goto_2
++
++    :goto_1
++    throw v1
++
++    :goto_2
++    goto :goto_1
++.end method
++
++.method public static menuCurrentValue(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;
++    .locals 2
++
++    .line 132
++    :try_start_0
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sAppliedId:Ljava/lang/String;
++
++    if-nez v0, :cond_0
++
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->currentAppliedId()Ljava/lang/String;
++
++    move-result-object v0
++
++    if-nez v0, :cond_0
++
++    .line 133
++    return-object p1
++
++    .line 135
++    :cond_0
++    if-eqz p0, :cond_4
++
++    const-string v0, "com.sony.imaging.app.base.shooting.camera.PictureEffectController"
++
++    .line 137
++    invoke-virtual {p0}, Ljava/lang/Class;->getName()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result p0
++
++    if-nez p0, :cond_1
++
++    goto :goto_0
++
++    .line 140
++    :cond_1
++    if-eqz p1, :cond_2
++
++    const-string p0, "off"
++
++    invoke-virtual {p0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_3
++
++    .line 141
++    :cond_2
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->currentAppliedId()Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 142
++    if-eqz p0, :cond_3
++
++    const-string v0, "lut-"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_3
++
++    .line 143
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "menuCur "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    const-string v1, " -> "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 144
++    return-object p0
++
++    .line 147
++    :cond_3
++    return-object p1
++
++    .line 138
++    :cond_4
++    :goto_0
++    return-object p1
++
++    .line 148
++    :catchall_0
++    move-exception p0
++
++    .line 149
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "menuCurrentValue FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 150
++    return-object p1
++.end method
++
++.method public static menuGuide(Ljava/lang/String;)Ljava/lang/CharSequence;
++    .locals 3
++
++    .line 209
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->menuGuideInner(Ljava/lang/String;)Ljava/lang/CharSequence;
++
++    move-result-object v0
++
++    .line 210
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "menuGuide("
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, ") -> "
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    if-nez v0, :cond_0
++
++    const-string v1, "null"
++
++    goto :goto_0
++
++    :cond_0
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "\""
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    :goto_0
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    const-string v1, "LutBridge"
++
++    invoke-static {v1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 211
++    return-object v0
++.end method
++
++.method private static menuGuideInner(Ljava/lang/String;)Ljava/lang/CharSequence;
++    .locals 2
++
++    .line 215
++    const/4 v0, 0x0
++
++    if-nez p0, :cond_0
++
++    .line 216
++    return-object v0
++
++    .line 218
++    :cond_0
++    const-string v1, "lut-off"
++
++    invoke-virtual {v1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_1
++
++    .line 219
++    const-string p0, "\u5173\u95ed LUT\uff0c\u6062\u590d\u76f8\u673a\u539f\u751f\u8272\u5f69\u3002"
++
++    return-object p0
++
++    .line 221
++    :cond_1
++    const-string v1, "lut-"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_3
++
++    .line 222
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->descFor(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 223
++    if-eqz p0, :cond_2
++
++    goto :goto_0
++
++    :cond_2
++    const-string p0, "\u80f6\u7247\u6a21\u62df LUT\uff08\u80f6\u7247\u98ce\u683c\u9884\u5206\u89e3\uff09\u3002"
++
++    :goto_0
++    return-object p0
++
++    .line 225
++    :cond_3
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->isRetired(Ljava/lang/String;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_4
++
++    .line 226
++    const-string p0, ""
++
++    return-object p0
++
++    .line 228
++    :cond_4
++    return-object v0
++.end method
++
++.method public static menuText(Ljava/lang/String;)Ljava/lang/CharSequence;
++    .locals 3
++
++    .line 184
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->menuTextInner(Ljava/lang/String;)Ljava/lang/CharSequence;
++
++    move-result-object v0
++
++    .line 185
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "menuText("
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v1, ") -> "
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    if-nez v0, :cond_0
++
++    const-string v1, "null"
++
++    goto :goto_0
++
++    :cond_0
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "\""
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    :goto_0
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    const-string v1, "LutBridge"
++
++    invoke-static {v1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 186
++    return-object v0
++.end method
++
++.method private static menuTextInner(Ljava/lang/String;)Ljava/lang/CharSequence;
++    .locals 3
++
++    .line 190
++    const/4 v0, 0x0
++
++    if-nez p0, :cond_0
++
++    .line 191
++    return-object v0
++
++    .line 193
++    :cond_0
++    const-string v1, "lut-off"
++
++    invoke-virtual {v1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_1
++
++    .line 194
++    const-string p0, "OFF"
++
++    return-object p0
++
++    .line 196
++    :cond_1
++    const-string v1, "lut-"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v2
++
++    if-eqz v2, :cond_3
++
++    .line 197
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v0
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->substring(I)Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/String;->toUpperCase()Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 198
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->indexOfStem(Ljava/lang/String;)I
++
++    move-result v0
++
++    .line 200
++    if-gez v0, :cond_2
++
++    goto :goto_0
++
++    :cond_2
++    sget-object p0, Lcom/sonylut/bridge/LutManifest;->NAMES:[Ljava/lang/String;
++
++    aget-object p0, p0, v0
++
++    :goto_0
++    return-object p0
++
++    .line 202
++    :cond_3
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->isRetired(Ljava/lang/String;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_4
++
++    .line 203
++    const-string p0, ""
++
++    return-object p0
++
++    .line 205
++    :cond_4
++    return-object v0
++.end method
++
++.method public static onCameraReady(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++    .locals 3
++
++    .line 571
++    if-eqz p0, :cond_4
++
++    :try_start_0
++    invoke-virtual {p0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v0
++
++    if-nez v0, :cond_0
++
++    goto :goto_2
++
++    .line 575
++    :cond_0
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->currentAppliedId()Ljava/lang/String;
++
++    move-result-object v0
++
++    .line 576
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "camReady id="
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-static {v1}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 577
++    if-eqz v0, :cond_3
++
++    const-string v1, "lut-off"
++
++    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v1
++
++    if-eqz v1, :cond_1
++
++    goto :goto_0
++
++    .line 580
++    :cond_1
++    const-string v1, "lut-"
++
++    invoke-virtual {v0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_2
++
++    .line 581
++    return-void
++
++    .line 583
++    :cond_2
++    invoke-static {v0, p0}, Lcom/sonylut/bridge/LutBridge;->applyLut(Ljava/lang/String;Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 584
++    new-instance p0, Ljava/lang/StringBuilder;
++
++    invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "camReady re-applied "
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 587
++    goto :goto_1
++
++    .line 578
++    :cond_3
++    :goto_0
++    return-void
++
++    .line 585
++    :catchall_0
++    move-exception p0
++
++    .line 586
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "camReady FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 588
++    :goto_1
++    return-void
++
++    .line 572
++    :cond_4
++    :goto_2
++    return-void
++.end method
++
++.method public static onCustomKey(I)V
++    .locals 2
++
++    .line 290
++    :try_start_0
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "custkey code="
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 293
++    goto :goto_0
++
++    .line 291
++    :catchall_0
++    move-exception p0
++
++    .line 294
++    :goto_0
++    return-void
++.end method
++
++.method public static onExitConfirmed(Ljava/lang/Object;)V
++    .locals 3
++
++    .line 500
++    :try_start_0
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++    if-eqz v0, :cond_0
++
++    invoke-virtual {v0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v0
++
++    goto :goto_0
++
++    :cond_0
++    const/4 v0, 0x0
++
++    .line 501
++    :goto_0
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "exitConfirmed from="
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    .line 502
++    if-nez p0, :cond_1
++
++    const-string p0, "null"
++
++    goto :goto_1
++
++    :cond_1
++    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/Class;->getName()Ljava/lang/String;
++
++    move-result-object p0
++
++    :goto_1
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 501
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 503
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->unbindGamma(Lcom/sony/scalar/hardware/CameraEx;)V
++
++    .line 504
++    new-instance p0, Ljava/lang/StringBuilder;
++
++    invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v0, "exitConfirmed done (sTable "
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    if-nez v0, :cond_2
++
++    const-string v0, "released"
++
++    goto :goto_2
++
++    :cond_2
++    const-string v0, "alive"
++
++    :goto_2
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v0, ")"
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 508
++    goto :goto_3
++
++    .line 506
++    :catchall_0
++    move-exception p0
++
++    .line 507
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "exitConfirmed FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 509
++    :goto_3
++    return-void
++.end method
++
++.method public static onHostResume(Ljava/lang/Object;)V
++    .locals 2
++
++    .line 513
++    :try_start_0
++    sget-object p0, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    if-eqz p0, :cond_0
++
++    .line 514
++    return-void
++
++    .line 516
++    :cond_0
++    invoke-static {}, Lcom/sonylut/bridge/LutBridge;->currentAppliedId()Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 517
++    if-eqz p0, :cond_3
++
++    const-string v0, "lut-"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v0
++
++    if-nez v0, :cond_1
++
++    goto :goto_1
++
++    .line 520
++    :cond_1
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "onResume: rebuild gamma table for "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 521
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++    if-eqz v0, :cond_2
++
++    invoke-virtual {v0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v0
++
++    if-eqz v0, :cond_2
++
++    .line 522
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++    invoke-static {p0, v0}, Lcom/sonylut/bridge/LutBridge;->applyLut(Ljava/lang/String;Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 523
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "onResume: rebuilt "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    goto :goto_0
++
++    .line 525
++    :cond_2
++    const-string p0, "onResume: camera not ready, will rebuild on camReady"
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 529
++    :goto_0
++    goto :goto_2
++
++    .line 518
++    :cond_3
++    :goto_1
++    return-void
++
++    .line 527
++    :catchall_0
++    move-exception p0
++
++    .line 528
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "onHostResume FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 530
++    :goto_2
++    return-void
++.end method
++
++.method public static onTerm(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++    .locals 2
++
++    .line 469
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sActivity:Landroid/app/Activity;
++
++    if-eqz v0, :cond_0
++
++    invoke-virtual {v0}, Landroid/app/Activity;->isFinishing()Z
++
++    move-result v0
++
++    if-nez v0, :cond_0
++
++    .line 470
++    const-string p0, "onTerm skip (internal transition)"
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 471
++    return-void
++
++    .line 473
++    :cond_0
++    const-string v0, "onTerm (finishing)"
++
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 475
++    if-eqz p0, :cond_1
++
++    :try_start_0
++    invoke-virtual {p0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v0
++
++    if-eqz v0, :cond_1
++
++    .line 476
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->MATRIX_IDENTITY:[I
++
++    invoke-static {v0, p0}, Lcom/sonylut/bridge/LutBridge;->writeMatrix([ILcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++
++    .line 478
++    :cond_1
++    const-string p0, "LutBridge"
++
++    const-string v0, "onTerm: gamma table left bound, not touched"
++
++    invoke-static {p0, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 479
++    const/4 p0, 0x0
++
++    sput-object p0, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 482
++    goto :goto_0
++
++    .line 480
++    :catchall_0
++    move-exception p0
++
++    .line 481
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "onTerm FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 483
++    :goto_0
++    return-void
++.end method
++
++.method public static onUserExit(Ljava/lang/Object;)V
++    .locals 3
++
++    .line 487
++    :try_start_0
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sCamSet:Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;
++
++    if-eqz v0, :cond_0
++
++    invoke-virtual {v0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getCamera()Lcom/sony/scalar/hardware/CameraEx;
++
++    move-result-object v0
++
++    goto :goto_0
++
++    :cond_0
++    const/4 v0, 0x0
++
++    .line 488
++    :goto_0
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "onPause: detach gamma table (ungated) from="
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    .line 489
++    if-nez p0, :cond_1
++
++    const-string p0, "null"
++
++    goto :goto_1
++
++    :cond_1
++    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/Class;->getName()Ljava/lang/String;
++
++    move-result-object p0
++
++    :goto_1
++    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 488
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 490
++    invoke-static {v0}, Lcom/sonylut/bridge/LutBridge;->unbindGamma(Lcom/sony/scalar/hardware/CameraEx;)V
++
++    .line 491
++    new-instance p0, Ljava/lang/StringBuilder;
++
++    invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v0, "onPause: detach done (sTable "
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    if-nez v0, :cond_2
++
++    const-string v0, "released"
++
++    goto :goto_2
++
++    :cond_2
++    const-string v0, "alive"
++
++    :goto_2
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v0, ")"
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 495
++    goto :goto_3
++
++    .line 493
++    :catchall_0
++    move-exception p0
++
++    .line 494
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "userExit FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 496
++    :goto_3
++    return-void
++.end method
++
++.method public static prewarm(Landroid/content/Context;)V
++    .locals 1
++
++    .line 533
++    if-eqz p0, :cond_0
++
++    .line 534
++    invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
++
++    move-result-object v0
++
++    sput-object v0, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    .line 535
++    instance-of v0, p0, Landroid/app/Activity;
++
++    if-eqz v0, :cond_0
++
++    .line 537
++    check-cast p0, Landroid/app/Activity;
++
++    sput-object p0, Lcom/sonylut/bridge/LutBridge;->sActivity:Landroid/app/Activity;
++
++    .line 540
++    :cond_0
++    const-class p0, Lcom/sonylut/bridge/LutBridge;
++
++    monitor-enter p0
++
++    .line 541
++    :try_start_0
++    sget-boolean v0, Lcom/sonylut/bridge/LutBridge;->sPrewarmDone:Z
++
++    if-eqz v0, :cond_1
++
++    .line 542
++    monitor-exit p0
++
++    return-void
++
++    .line 544
++    :cond_1
++    const/4 v0, 0x1
++
++    sput-boolean v0, Lcom/sonylut/bridge/LutBridge;->sPrewarmDone:Z
++
++    .line 545
++    monitor-exit p0
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 546
++    new-instance p0, Lcom/sonylut/bridge/LutBridge$1;
++
++    const-string v0, "lut-prewarm"
++
++    invoke-direct {p0, v0}, Lcom/sonylut/bridge/LutBridge$1;-><init>(Ljava/lang/String;)V
++
++    .line 566
++    invoke-virtual {p0}, Lcom/sonylut/bridge/LutBridge$1;->start()V
++
++    .line 567
++    return-void
++
++    .line 545
++    :catchall_0
++    move-exception v0
++
++    :try_start_1
++    monitor-exit p0
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    throw v0
++.end method
++
++.method private static readApplied()Ljava/lang/String;
++    .locals 7
++
++    .line 93
++    const/4 v0, 0x0
++
++    :try_start_0
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    if-nez v1, :cond_0
++
++    .line 94
++    return-object v0
++
++    .line 96
++    :cond_0
++    new-instance v1, Ljava/io/File;
++
++    sget-object v2, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    invoke-virtual {v2}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
++
++    move-result-object v2
++
++    const-string v3, "lut_applied.txt"
++
++    invoke-direct {v1, v2, v3}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
++
++    .line 97
++    invoke-virtual {v1}, Ljava/io/File;->isFile()Z
++
++    move-result v2
++
++    if-nez v2, :cond_1
++
++    .line 98
++    return-object v0
++
++    .line 100
++    :cond_1
++    new-instance v2, Ljava/io/FileInputStream;
++
++    invoke-direct {v2, v1}, Ljava/io/FileInputStream;-><init>(Ljava/io/File;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_1
++
++    .line 102
++    :try_start_1
++    invoke-virtual {v1}, Ljava/io/File;->length()J
++
++    move-result-wide v3
++
++    long-to-int v1, v3
++
++    new-array v1, v1, [B
++
++    .line 103
++    invoke-virtual {v2, v1}, Ljava/io/FileInputStream;->read([B)I
++
++    move-result v3
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    .line 104
++    if-gtz v3, :cond_2
++
++    .line 105
++    nop
++
++    .line 110
++    :try_start_2
++    invoke-virtual {v2}, Ljava/io/FileInputStream;->close()V
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_1
++
++    .line 105
++    return-object v0
++
++    .line 107
++    :cond_2
++    :try_start_3
++    new-instance v4, Ljava/lang/String;
++
++    const-string v5, "UTF-8"
++
++    const/4 v6, 0x0
++
++    invoke-direct {v4, v1, v6, v3, v5}, Ljava/lang/String;-><init>([BIILjava/lang/String;)V
++
++    invoke-virtual {v4}, Ljava/lang/String;->trim()Ljava/lang/String;
++
++    move-result-object v1
++
++    .line 108
++    invoke-static {v1}, Lcom/sonylut/bridge/LutBridge;->isBuiltin(Ljava/lang/String;)Z
++
++    move-result v3
++    :try_end_3
++    .catchall {:try_start_3 .. :try_end_3} :catchall_0
++
++    if-eqz v3, :cond_3
++
++    goto :goto_0
++
++    :cond_3
++    move-object v1, v0
++
++    .line 110
++    :goto_0
++    :try_start_4
++    invoke-virtual {v2}, Ljava/io/FileInputStream;->close()V
++
++    .line 108
++    return-object v1
++
++    .line 110
++    :catchall_0
++    move-exception v1
++
++    invoke-virtual {v2}, Ljava/io/FileInputStream;->close()V
++
++    .line 111
++    throw v1
++    :try_end_4
++    .catchall {:try_start_4 .. :try_end_4} :catchall_1
++
++    .line 112
++    :catchall_1
++    move-exception v1
++
++    .line 113
++    new-instance v2, Ljava/lang/StringBuilder;
++
++    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v3, "readApplied FAIL "
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {v2, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-static {v1}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 114
++    return-object v0
++.end method
++
++.method private static rewriteGamma([ILcom/sony/scalar/hardware/CameraEx;)V
++    .locals 8
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 717
++    sget-object p1, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    if-eqz p1, :cond_3
++
++    sget-object p1, Lcom/sonylut/bridge/LutBridge;->sIdentityBuf:[B
++
++    if-nez p1, :cond_0
++
++    goto :goto_2
++
++    .line 720
++    :cond_0
++    sget v0, Lcom/sonylut/bridge/LutBridge;->sTablePoints:I
++
++    .line 721
++    array-length p1, p1
++
++    new-array p1, p1, [B
++
++    .line 722
++    const/4 v1, 0x0
++
++    :goto_0
++    if-ge v1, v0, :cond_2
++
++    .line 723
++    int-to-long v2, v1
++
++    const-wide/16 v4, 0x3ff
++
++    mul-long v2, v2, v4
++
++    add-int/lit8 v4, v0, -0x1
++
++    const/4 v5, 0x1
++
++    if-lez v4, :cond_1
++
++    goto :goto_1
++
++    :cond_1
++    const/4 v4, 0x1
++
++    :goto_1
++    int-to-long v6, v4
++
++    div-long/2addr v2, v6
++
++    long-to-int v3, v2
++
++    .line 724
++    aget v2, p0, v3
++
++    .line 725
++    mul-int/lit8 v3, v1, 0x2
++
++    and-int/lit16 v4, v2, 0xff
++
++    int-to-byte v4, v4
++
++    aput-byte v4, p1, v3
++
++    .line 726
++    add-int/2addr v3, v5
++
++    shr-int/lit8 v2, v2, 0x8
++
++    and-int/lit16 v2, v2, 0xff
++
++    int-to-byte v2, v2
++
++    aput-byte v2, p1, v3
++
++    .line 722
++    add-int/lit8 v1, v1, 0x1
++
++    goto :goto_0
++
++    .line 728
++    :cond_2
++    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
++
++    move-result-wide v0
++
++    .line 729
++    sget-object p0, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    new-instance v2, Ljava/io/ByteArrayInputStream;
++
++    invoke-direct {v2, p1}, Ljava/io/ByteArrayInputStream;-><init>([B)V
++
++    invoke-virtual {p0, v2}, Lcom/sony/scalar/hardware/CameraEx$GammaTable;->write(Ljava/io/InputStream;)I
++
++    move-result p0
++
++    .line 730
++    new-instance p1, Ljava/lang/StringBuilder;
++
++    invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "gamma rewrite "
++
++    invoke-virtual {p1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    .line 731
++    invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
++
++    move-result-wide v2
++
++    sub-long/2addr v2, v0
++
++    invoke-virtual {p1, v2, v3}, Ljava/lang/StringBuilder;->append(J)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    const-string v0, "ms, bytes="
++
++    invoke-virtual {p1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p1
++
++    invoke-virtual {p1, p0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    .line 730
++    const-string p1, "LutBridge"
++
++    invoke-static {p1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 732
++    return-void
++
++    .line 718
++    :cond_3
++    :goto_2
++    return-void
++.end method
++
++.method private static saveApplied(Ljava/lang/String;)V
++    .locals 3
++
++    .line 67
++    sput-object p0, Lcom/sonylut/bridge/LutBridge;->sAppliedId:Ljava/lang/String;
++
++    .line 68
++    const/4 v0, 0x1
++
++    sput-boolean v0, Lcom/sonylut/bridge/LutBridge;->sAppliedLoaded:Z
++
++    .line 70
++    :try_start_0
++    sget-object v0, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    if-nez v0, :cond_0
++
++    .line 71
++    return-void
++
++    .line 73
++    :cond_0
++    new-instance v0, Ljava/io/File;
++
++    sget-object v1, Lcom/sonylut/bridge/LutBridge;->sContext:Landroid/content/Context;
++
++    invoke-virtual {v1}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
++
++    move-result-object v1
++
++    const-string v2, "lut_applied.txt"
++
++    invoke-direct {v0, v1, v2}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
++
++    .line 74
++    if-nez p0, :cond_2
++
++    .line 75
++    invoke-virtual {v0}, Ljava/io/File;->isFile()Z
++
++    move-result p0
++
++    if-eqz p0, :cond_1
++
++    .line 76
++    invoke-virtual {v0}, Ljava/io/File;->delete()Z
++
++    .line 78
++    :cond_1
++    return-void
++
++    .line 80
++    :cond_2
++    new-instance v1, Ljava/io/FileOutputStream;
++
++    invoke-direct {v1, v0}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_1
++
++    .line 82
++    :try_start_1
++    const-string v0, "UTF-8"
++
++    invoke-virtual {p0, v0}, Ljava/lang/String;->getBytes(Ljava/lang/String;)[B
++
++    move-result-object p0
++
++    invoke-virtual {v1, p0}, Ljava/io/FileOutputStream;->write([B)V
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_0
++
++    .line 84
++    :try_start_2
++    invoke-virtual {v1}, Ljava/io/FileOutputStream;->close()V
++
++    .line 85
++    nop
++
++    .line 88
++    goto :goto_0
++
++    .line 84
++    :catchall_0
++    move-exception p0
++
++    invoke-virtual {v1}, Ljava/io/FileOutputStream;->close()V
++
++    .line 85
++    throw p0
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_1
++
++    .line 86
++    :catchall_1
++    move-exception p0
++
++    .line 87
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "saveApplied FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 89
++    :goto_0
++    return-void
++.end method
++
++.method private static setHalEffectOff(Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++    .locals 3
++
++    .line 673
++    nop
++
++    .line 674
++    invoke-virtual {p0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getEmptyParameters()Landroid/util/Pair;
++
++    move-result-object v0
++
++    .line 675
++    iget-object v1, v0, Landroid/util/Pair;->second:Ljava/lang/Object;
++
++    check-cast v1, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;
++
++    const-string v2, "off"
++
++    invoke-virtual {v1, v2}, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;->setPictureEffect(Ljava/lang/String;)V
++
++    .line 676
++    invoke-virtual {p0, v0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->setParameters(Landroid/util/Pair;)V
++
++    .line 677
++    return-void
++.end method
++
++.method public static tuneNameView(Landroid/widget/TextView;)V
++    .locals 3
++
++    .line 270
++    if-nez p0, :cond_0
++
++    .line 271
++    return-void
++
++    .line 273
++    :cond_0
++    const/4 v0, 0x0
++
++    :try_start_0
++    invoke-virtual {p0, v0}, Landroid/widget/TextView;->setSingleLine(Z)V
++
++    .line 274
++    const/4 v0, 0x5
++
++    invoke-virtual {p0, v0}, Landroid/widget/TextView;->setMaxLines(I)V
++
++    .line 275
++    invoke-virtual {p0}, Landroid/widget/TextView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
++
++    move-result-object v0
++
++    .line 276
++    if-eqz v0, :cond_1
++
++    iget v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
++
++    const/4 v2, -0x2
++
++    if-eq v1, v2, :cond_1
++
++    .line 277
++    iget v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
++
++    .line 278
++    iput v2, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
++
++    .line 279
++    invoke-virtual {p0, v0}, Landroid/widget/TextView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
++
++    .line 280
++    invoke-virtual {p0}, Landroid/widget/TextView;->requestLayout()V
++
++    .line 281
++    new-instance p0, Ljava/lang/StringBuilder;
++
++    invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v0, "tuneNameView height "
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v0, " -> WRAP_CONTENT"
++
++    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 285
++    :cond_1
++    goto :goto_0
++
++    .line 283
++    :catchall_0
++    move-exception p0
++
++    .line 284
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "tuneNameView FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 286
++    :goto_0
++    return-void
++.end method
++
++.method private static declared-synchronized unbindGamma(Lcom/sony/scalar/hardware/CameraEx;)V
++    .locals 5
++
++    const-class v0, Lcom/sonylut/bridge/LutBridge;
++
++    monitor-enter v0
++
++    .line 735
++    const/4 v1, 0x0
++
++    if-eqz p0, :cond_0
++
++    .line 737
++    :try_start_0
++    invoke-virtual {p0, v1}, Lcom/sony/scalar/hardware/CameraEx;->setExtendedGammaTable(Lcom/sony/scalar/hardware/CameraEx$GammaTable;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 740
++    goto :goto_0
++
++    .line 738
++    :catchall_0
++    move-exception p0
++
++    .line 739
++    :try_start_1
++    const-string v2, "LutBridge"
++
++    new-instance v3, Ljava/lang/StringBuilder;
++
++    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v4, "unbind n/a: "
++
++    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {v2, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 742
++    :cond_0
++    :goto_0
++    sget-object p0, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++    :try_end_1
++    .catchall {:try_start_1 .. :try_end_1} :catchall_2
++
++    if-eqz p0, :cond_1
++
++    .line 744
++    :try_start_2
++    invoke-virtual {p0}, Lcom/sony/scalar/hardware/CameraEx$GammaTable;->release()V
++    :try_end_2
++    .catchall {:try_start_2 .. :try_end_2} :catchall_1
++
++    .line 747
++    goto :goto_1
++
++    .line 745
++    :catchall_1
++    move-exception p0
++
++    .line 746
++    :try_start_3
++    const-string v2, "LutBridge"
++
++    new-instance v3, Ljava/lang/StringBuilder;
++
++    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v4, "release n/a: "
++
++    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {v2, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++
++    .line 748
++    :goto_1
++    sput-object v1, Lcom/sonylut/bridge/LutBridge;->sTable:Lcom/sony/scalar/hardware/CameraEx$GammaTable;
++
++    .line 749
++    sput-object v1, Lcom/sonylut/bridge/LutBridge;->sIdentityBuf:[B
++
++    .line 750
++    const-string p0, "LutBridge"
++
++    const-string v1, "gamma unbound+released"
++
++    invoke-static {p0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    :try_end_3
++    .catchall {:try_start_3 .. :try_end_3} :catchall_2
++
++    .line 752
++    :cond_1
++    monitor-exit v0
++
++    return-void
++
++    .line 734
++    :catchall_2
++    move-exception p0
++
++    monitor-exit v0
++
++    throw p0
++.end method
++
++.method public static withCaption(Ljava/lang/String;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
++    .locals 7
++
++    .line 241
++    const-string v0, "\n"
++
++    if-eqz p1, :cond_4
++
++    if-eqz p0, :cond_4
++
++    :try_start_0
++    const-string v1, "lut-"
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
++
++    move-result v1
++
++    if-nez v1, :cond_0
++
++    goto/16 :goto_1
++
++    .line 244
++    :cond_0
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->descFor(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v1
++
++    .line 245
++    if-eqz v1, :cond_3
++
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v2
++
++    if-nez v2, :cond_1
++
++    goto/16 :goto_0
++
++    .line 248
++    :cond_1
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v2
++
++    const/16 v3, 0x50
++
++    if-le v2, v3, :cond_2
++
++    .line 249
++    new-instance v2, Ljava/lang/StringBuilder;
++
++    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
++
++    const/4 v4, 0x0
++
++    invoke-virtual {v1, v4, v3}, Ljava/lang/String;->substring(II)Ljava/lang/String;
++
++    move-result-object v1
++
++    invoke-virtual {v2, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    const-string v2, "\u2026"
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v1
++
++    .line 251
++    :cond_2
++    invoke-virtual {p1}, Ljava/lang/Object;->toString()Ljava/lang/String;
++
++    move-result-object v2
++
++    .line 252
++    new-instance v3, Ljava/lang/StringBuilder;
++
++    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {v3, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v3
++
++    invoke-virtual {v3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v3
++
++    .line 253
++    invoke-virtual {v2}, Ljava/lang/String;->length()I
++
++    move-result v2
++
++    invoke-virtual {v0}, Ljava/lang/String;->length()I
++
++    move-result v0
++
++    add-int/2addr v2, v0
++
++    .line 254
++    new-instance v0, Landroid/text/SpannableString;
++
++    invoke-direct {v0, v3}, Landroid/text/SpannableString;-><init>(Ljava/lang/CharSequence;)V
++
++    .line 255
++    new-instance v4, Landroid/text/style/RelativeSizeSpan;
++
++    const v5, 0x3f19999a    # 0.6f
++
++    invoke-direct {v4, v5}, Landroid/text/style/RelativeSizeSpan;-><init>(F)V
++
++    invoke-virtual {v3}, Ljava/lang/String;->length()I
++
++    move-result v5
++
++    const/16 v6, 0x21
++
++    invoke-virtual {v0, v4, v2, v5, v6}, Landroid/text/SpannableString;->setSpan(Ljava/lang/Object;III)V
++
++    .line 258
++    new-instance v4, Landroid/text/style/AlignmentSpan$Standard;
++
++    sget-object v5, Landroid/text/Layout$Alignment;->ALIGN_NORMAL:Landroid/text/Layout$Alignment;
++
++    invoke-direct {v4, v5}, Landroid/text/style/AlignmentSpan$Standard;-><init>(Landroid/text/Layout$Alignment;)V
++
++    .line 259
++    invoke-virtual {v3}, Ljava/lang/String;->length()I
++
++    move-result v3
++
++    .line 258
++    invoke-virtual {v0, v4, v2, v3, v6}, Landroid/text/SpannableString;->setSpan(Ljava/lang/Object;III)V
++
++    .line 260
++    new-instance v2, Ljava/lang/StringBuilder;
++
++    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v3, "caption "
++
++    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v2
++
++    invoke-virtual {v2, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    const-string v2, " desc="
++
++    invoke-virtual {p0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {v1}, Ljava/lang/String;->length()I
++
++    move-result v1
++
++    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 261
++    return-object v0
++
++    .line 246
++    :cond_3
++    :goto_0
++    return-object p1
++
++    .line 262
++    :catchall_0
++    move-exception p0
++
++    .line 263
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v1, "withCaption FAIL "
++
++    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
++
++    move-result-object p0
++
++    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    invoke-static {p0}, Lcom/sonylut/bridge/LutBridge;->log(Ljava/lang/String;)V
++
++    .line 264
++    return-object p1
++
++    .line 242
++    :cond_4
++    :goto_1
++    return-object p1
++.end method
++
++.method private static writeMatrix([ILcom/sony/imaging/app/base/shooting/camera/CameraSetting;)V
++    .locals 2
++
++    .line 665
++    nop
++
++    .line 666
++    invoke-virtual {p1}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->getEmptyParameters()Landroid/util/Pair;
++
++    move-result-object v0
++
++    .line 667
++    iget-object v1, v0, Landroid/util/Pair;->second:Ljava/lang/Object;
++
++    check-cast v1, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;
++
++    invoke-virtual {v1, p0}, Lcom/sony/scalar/hardware/CameraEx$ParametersModifier;->setRGBMatrix([I)V
++
++    .line 668
++    invoke-virtual {p1, v0}, Lcom/sony/imaging/app/base/shooting/camera/CameraSetting;->setParameters(Landroid/util/Pair;)V
++
++    .line 669
++    return-void
++.end method
+diff -ruN -x LutManifest.smali a/smali/com/sonylut/bridge/LutParams.smali b/smali/com/sonylut/bridge/LutParams.smali
+--- a/smali/com/sonylut/bridge/LutParams.smali	1970-01-01 08:00:00.000000000 +0800
++++ b/smali/com/sonylut/bridge/LutParams.smali	2026-09-13 13:05:34.171980609 +0800
+@@ -0,0 +1,330 @@
++.class public Lcom/sonylut/bridge/LutParams;
++.super Ljava/lang/Object;
++.source "LutParams.java"
++
++
++# static fields
++.field public static final KNOTS:I = 0x400
++
++.field public static final MATRIX_SCALE:I = 0x400
++
++.field private static final VERSION:I = 0x2
++
++
++# instance fields
++.field public gamma:[I
++
++.field public matrix:[I
++
++.field public srcLen:J
++
++.field public srcMtime:J
++
++
++# direct methods
++.method public constructor <init>()V
++    .locals 2
++
++    .line 9
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    .line 14
++    const/16 v0, 0x400
++
++    new-array v0, v0, [I
++
++    iput-object v0, p0, Lcom/sonylut/bridge/LutParams;->gamma:[I
++
++    .line 15
++    const/16 v0, 0x9
++
++    new-array v0, v0, [I
++
++    iput-object v0, p0, Lcom/sonylut/bridge/LutParams;->matrix:[I
++
++    .line 16
++    const-wide/16 v0, -0x1
++
++    iput-wide v0, p0, Lcom/sonylut/bridge/LutParams;->srcLen:J
++
++    .line 17
++    iput-wide v0, p0, Lcom/sonylut/bridge/LutParams;->srcMtime:J
++
++    return-void
++.end method
++
++.method public static load([B)Lcom/sonylut/bridge/LutParams;
++    .locals 2
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 39
++    new-instance v0, Ljava/io/DataInputStream;
++
++    new-instance v1, Ljava/io/ByteArrayInputStream;
++
++    invoke-direct {v1, p0}, Ljava/io/ByteArrayInputStream;-><init>([B)V
++
++    invoke-direct {v0, v1}, Ljava/io/DataInputStream;-><init>(Ljava/io/InputStream;)V
++
++    .line 42
++    :try_start_0
++    invoke-static {v0}, Lcom/sonylut/bridge/LutParams;->read(Ljava/io/DataInputStream;)Lcom/sonylut/bridge/LutParams;
++
++    move-result-object p0
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 44
++    invoke-virtual {v0}, Ljava/io/DataInputStream;->close()V
++
++    .line 42
++    return-object p0
++
++    .line 44
++    :catchall_0
++    move-exception p0
++
++    invoke-virtual {v0}, Ljava/io/DataInputStream;->close()V
++
++    .line 45
++    throw p0
++.end method
++
++.method private static read(Ljava/io/DataInputStream;)Lcom/sonylut/bridge/LutParams;
++    .locals 5
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 49
++    invoke-virtual {p0}, Ljava/io/DataInputStream;->readInt()I
++
++    move-result v0
++
++    .line 50
++    const/4 v1, 0x1
++
++    const/4 v2, 0x2
++
++    if-eq v0, v1, :cond_1
++
++    if-ne v0, v2, :cond_0
++
++    goto :goto_0
++
++    .line 51
++    :cond_0
++    new-instance p0, Ljava/io/IOException;
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
++
++    const-string v2, "bad cache version "
++
++    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    move-result-object v1
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
++
++    throw p0
++
++    .line 53
++    :cond_1
++    :goto_0
++    new-instance v1, Lcom/sonylut/bridge/LutParams;
++
++    invoke-direct {v1}, Lcom/sonylut/bridge/LutParams;-><init>()V
++
++    .line 54
++    if-lt v0, v2, :cond_2
++
++    .line 55
++    invoke-virtual {p0}, Ljava/io/DataInputStream;->readLong()J
++
++    move-result-wide v2
++
++    iput-wide v2, v1, Lcom/sonylut/bridge/LutParams;->srcLen:J
++
++    .line 56
++    invoke-virtual {p0}, Ljava/io/DataInputStream;->readLong()J
++
++    move-result-wide v2
++
++    iput-wide v2, v1, Lcom/sonylut/bridge/LutParams;->srcMtime:J
++
++    .line 58
++    :cond_2
++    const/4 v0, 0x0
++
++    const/4 v2, 0x0
++
++    :goto_1
++    const/16 v3, 0x400
++
++    if-ge v2, v3, :cond_3
++
++    .line 59
++    iget-object v3, v1, Lcom/sonylut/bridge/LutParams;->gamma:[I
++
++    invoke-virtual {p0}, Ljava/io/DataInputStream;->readInt()I
++
++    move-result v4
++
++    aput v4, v3, v2
++
++    .line 58
++    add-int/lit8 v2, v2, 0x1
++
++    goto :goto_1
++
++    .line 61
++    :cond_3
++    nop
++
++    :goto_2
++    const/16 v2, 0x9
++
++    if-ge v0, v2, :cond_4
++
++    .line 62
++    iget-object v2, v1, Lcom/sonylut/bridge/LutParams;->matrix:[I
++
++    invoke-virtual {p0}, Ljava/io/DataInputStream;->readInt()I
++
++    move-result v3
++
++    aput v3, v2, v0
++
++    .line 61
++    add-int/lit8 v0, v0, 0x1
++
++    goto :goto_2
++
++    .line 64
++    :cond_4
++    return-object v1
++.end method
++
++
++# virtual methods
++.method public save(Ljava/io/File;JJ)V
++    .locals 2
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/io/IOException;
++        }
++    .end annotation
++
++    .line 20
++    iput-wide p2, p0, Lcom/sonylut/bridge/LutParams;->srcLen:J
++
++    .line 21
++    iput-wide p4, p0, Lcom/sonylut/bridge/LutParams;->srcMtime:J
++
++    .line 22
++    new-instance v0, Ljava/io/DataOutputStream;
++
++    new-instance v1, Ljava/io/FileOutputStream;
++
++    invoke-direct {v1, p1}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
++
++    invoke-direct {v0, v1}, Ljava/io/DataOutputStream;-><init>(Ljava/io/OutputStream;)V
++
++    .line 24
++    const/4 p1, 0x2
++
++    :try_start_0
++    invoke-virtual {v0, p1}, Ljava/io/DataOutputStream;->writeInt(I)V
++
++    .line 25
++    invoke-virtual {v0, p2, p3}, Ljava/io/DataOutputStream;->writeLong(J)V
++
++    .line 26
++    invoke-virtual {v0, p4, p5}, Ljava/io/DataOutputStream;->writeLong(J)V
++
++    .line 27
++    const/4 p1, 0x0
++
++    const/4 p2, 0x0
++
++    :goto_0
++    const/16 p3, 0x400
++
++    if-ge p2, p3, :cond_0
++
++    .line 28
++    iget-object p3, p0, Lcom/sonylut/bridge/LutParams;->gamma:[I
++
++    aget p3, p3, p2
++
++    invoke-virtual {v0, p3}, Ljava/io/DataOutputStream;->writeInt(I)V
++
++    .line 27
++    add-int/lit8 p2, p2, 0x1
++
++    goto :goto_0
++
++    .line 30
++    :cond_0
++    nop
++
++    :goto_1
++    const/16 p2, 0x9
++
++    if-ge p1, p2, :cond_1
++
++    .line 31
++    iget-object p2, p0, Lcom/sonylut/bridge/LutParams;->matrix:[I
++
++    aget p2, p2, p1
++
++    invoke-virtual {v0, p2}, Ljava/io/DataOutputStream;->writeInt(I)V
++    :try_end_0
++    .catchall {:try_start_0 .. :try_end_0} :catchall_0
++
++    .line 30
++    add-int/lit8 p1, p1, 0x1
++
++    goto :goto_1
++
++    .line 34
++    :cond_1
++    invoke-virtual {v0}, Ljava/io/DataOutputStream;->close()V
++
++    .line 35
++    nop
++
++    .line 36
++    return-void
++
++    .line 34
++    :catchall_0
++    move-exception p1
++
++    invoke-virtual {v0}, Ljava/io/DataOutputStream;->close()V
++
++    .line 35
++    goto :goto_3
++
++    :goto_2
++    throw p1
++
++    :goto_3
++    goto :goto_2
++.end method

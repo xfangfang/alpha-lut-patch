@@ -1,0 +1,28 @@
+# 系统 / 编辑器
+.DS_Store
+*.swp
+*~
+
+# 外部工具：只有 lutbuild.jar（本工程自己编译，几十 KB）随仓库走；
+#   apktool / uber-apk-signer 体积大（24 MB + 3 MB）且各有发布页，**不入库**，
+#   clone 后自行下载到 tools/（命令见 README_ZH.md「准备」一节）
+/tools/*
+!/tools/lutbuild.jar
+
+# 构建产物与中间产物
+/dist/
+/work/
+
+# 生成物（真源 = assets/lutset.csv + assets/cub/*.CUB + assets/icon.jpg）
+#   assets/luts/*.LTC        ← cube 经 tools/lutbuild.jar 分解（scripts/make_assets.py）
+#   assets/icons/*.png       ← 底图套 LUT（scripts/make_icon.py，走 make_assets.py）
+/assets/luts/
+/assets/icons/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# 留底的原版 APK（版权归 Sony，不入库）
+/assets/*.apk
+*.log

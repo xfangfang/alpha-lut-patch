@@ -1,0 +1,24 @@
+# LUT 清单（唯一真源）：一行一支 LUT，**行顺序 = 菜单顺序**。
+#
+# 必填列：name / desc
+#   name —— LUT 的名字。菜单与预览页显示的就是它；**并同时决定内部 id 与资产文件名**：
+#           取「去掉非字母数字后大写」，例如 `Portra 400` → PORTRA400
+#           ⇒ 菜单 id = lut-portra400，cube/LTC = assets/cub/PORTRA400.CUB、
+#             assets/luts/PORTRA400.LTC，图标 = assets/icons/lut-portra400.png
+#           （所以名字里要有一段 ASCII 字母；纯中文名请放 label/desc）
+#   desc —— 预览页当前项名下的小字说明（写一句「厂商 + 胶片名 + 风格」最好）
+# 可选列（整列删掉也行，默认取 name）：
+#   label  —— 图标下方那行的中文短名（建议 ≤7 个全角字）
+#
+# LUT 文件放 assets/cub/<id>.CUB（id 就是上面推导出来的那截，全大写）。
+# 收一支自己的 .cube：python3 scripts/import_cube.py 你的.cube --name "名字"
+# （它会分解成 assets/luts/<id>.LTC、生成图标，并往这份清单追加一行）
+# 增删一支：改这份清单 + 放好/删掉对应的 .LTC（与图标），然后跑 ./build.sh
+name,label,desc
+PORTRA400,柯达波特拉400,柯达 Portra 400。专业负片：肤色温润细腻、宽容度高，暖调自然，人像常青树。
+PORTRA800,柯达波特拉800,柯达 Portra 800。高感负片：暖调更浓、暗部偏黄，室内与黄昏氛围感强。
+ELITE400,柯达精英400,柯达 Elite Color 400。消费级高速负片：红暖、暗部微青，日常感强。
+ASTIA100,富士阿斯提亚100,富士 Astia 100F。人像反转片：低反差、肤色柔润偏暖，克制的正片味。
+VELVIA50,富士维尔维亚50,富士 Velvia 50。风光反转片之王：极高饱和、深蓝浓绿，暗部厚重。
+ACROS100,富士阿克罗斯100,富士 NEOPAN ACROS 100。超细颗粒黑白：黑位干净、高光柔和，细腻银盐质感。
+TZEXP2,宝丽来过期片2,宝丽来 Time Zero（过期片）的另外一种显影效果：暗部抬成中性灰（≈118/255）、整体低饱和偏粉米色，水面转银灰、高光柔和，比 TZEXP 温和得多。
